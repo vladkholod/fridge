@@ -11,12 +11,4 @@ public class Parameter
     public Argument Argument { get; }
     
     public string? Value { get; }
-
-    public void ThrowIfNullValue()
-    {
-        if (Value is null)
-        {
-            throw new ArgumentNullException(Value, $"{Argument.Full} cannot be null.");
-        }
-    }
 }

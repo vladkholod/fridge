@@ -59,7 +59,6 @@ public class FreezeCommand : BaseCommand
     {
         var parameter =
             parameters.First(parameter => parameter.Argument.Equals(FreezeCommandArguments.PackageJsonFile));
-        parameter.ThrowIfNullValue();
 
         var file = new FileInfo(parameter.Value!);
         if (!file.Exists)
@@ -134,7 +133,6 @@ public class FreezeCommand : BaseCommand
         ILibResolver libResolver;
         if (versionListFileParameter is not null)
         {
-            versionListFileParameter.ThrowIfNullValue();
             libResolver = new VersionsFileLibResolver(new FileInfo(versionListFileParameter.Value!));
         }
         else
@@ -157,11 +155,7 @@ public class FreezeCommand : BaseCommand
     {
         var objects = parameters
             .Where(parameter => parameter.Argument.Equals(FreezeCommandArguments.FreezingDependenciesObject))
-            .Select(parameter =>
-            {
-                parameter.ThrowIfNullValue();
-                return parameter.Value!;
-            })
+            .Select(parameter => parameter.Value!)
             .ToArray();
 
         if (objects.Length == 0)
