@@ -6,14 +6,7 @@ namespace Fridge.Commands.Freeze;
 
 public class FreezeCommand : BaseCommand
 {
-    private static readonly string[] FreezeDependencies =
-    {
-        "dependencies",
-        "devDependencies",
-        "peerDependencies",
-    };
-
-    public static readonly CommandConfig CommandConfig = new()
+    private static readonly CommandConfig CommandConfig = new()
     {
         Name = "freeze",
         DescriptionFormat = "The `{0}` command is responsible for freezing of libs in package.json.",
@@ -29,6 +22,13 @@ public class FreezeCommand : BaseCommand
         },
     };
 
+    private static readonly string[] FreezeDependencies =
+    {
+        "dependencies",
+        "devDependencies",
+        "peerDependencies",
+    };
+    
     public FreezeCommand() : base(CommandConfig)
     {
     }
@@ -84,7 +84,7 @@ public class FreezeCommand : BaseCommand
         {
             resultWriter.WriteLine(line);
 
-            if (ParserHelper.TryGetKey(line, out var key) && freezingObjects.Contains(key))
+            if (JsonParsingHelper.TryGetKey(line, out var key) && freezingObjects.Contains(key))
             {
                 ProcessFreezeObject(
                     packageJsonReader,
@@ -103,13 +103,13 @@ public class FreezeCommand : BaseCommand
     {
         while (packageJsonReader.ReadLine() is { } line)
         {
-            if (ParserHelper.ContainsClosingParenthesis(line))
+            if (JsonParsingHelper.ContainsClosingParenthesis(line))
             {
                 resultWriter.WriteLine(line);
                 return;
             }
 
-            if (!ParserHelper.TryGetKey(line, out var libName))
+            if (!JsonParsingHelper.TryGetKey(line, out var libName))
             {
                 resultWriter.WriteLine(line);
                 continue;
@@ -174,7 +174,7 @@ public class FreezeCommand : BaseCommand
 
     private static string GetFrozenLine(string line, string frozenVersion)
     {
-        var currentVersionRange = ParserHelper.GetVersionRange(line);
+        var currentVersionRange = JsonParsingHelper.GetVersionRange(line);
 
         var frozenLine = line
             .Remove(currentVersionRange.Start.Value, currentVersionRange.Count())

@@ -11,5 +11,5 @@ public interface ICommand
 
     StringBuilder GetHelpBuilder();
 
-    void ValidateRequiredArguments(Argument[] arguments);
+    void ValidateRequiredArguments(IEnumerable<Argument> arguments);
 }

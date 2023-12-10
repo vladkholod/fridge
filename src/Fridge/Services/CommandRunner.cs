@@ -1,131 +1,49 @@
-﻿using System.Text;
-using Fridge.Commands;
-using Fridge.Commands.Freeze;
+﻿using Fridge.Commands;
 using Fridge.Common;
-using Fridge.Exceptions;
 using Fridge.Models;
 
 namespace Fridge.Services;
 
 public interface ICommandRunner
 {
-    void Run(string[] args);
+    void Run(CommandDescriptor commandDescriptor);
 }
 
 public class CommandRunner : ICommandRunner
 {
-    private static readonly IReadOnlyDictionary<string, ICommand> Commands = new Dictionary<string, ICommand>
+    public void Run(CommandDescriptor commandDescriptor)
     {
-        { FreezeCommand.CommandConfig.Name, new FreezeCommand() }
-    };
-
-    public void Run(string[] args)
-    {
-        if (args.Length == 0)
+        if (IsHelpRequested(commandDescriptor.Parameters))
         {
-            DisplayGlobalHelp();
+            DisplayCommandHelp(commandDescriptor.Command);
             return;
         }
 
-        var (command, parameters) = GetCommandWithParameters(args);
+        ValidateRequiredParameters(commandDescriptor);
 
-        if (IsHelpRequested(parameters))
-        {
-            var commandHelpBuilder = command.GetHelpBuilder();
-            Console.WriteLine(commandHelpBuilder);
-            return;
-        }
-
-        command.ValidateRequiredArguments(parameters.Select(parameter => parameter.Argument).ToArray());
-
-        command.Execute(parameters);
+        ExecuteCommand(commandDescriptor);
     }
 
-    private static (ICommand Command, Parameter[] Parameters) GetCommandWithParameters(string[] args)
+    private static void DisplayCommandHelp(ICommand command)
     {
-        var command = GetCommand(args[0]);
+        var commandHelpBuilder = command.GetHelpBuilder();
 
-        if (args.Length == 1)
-        {
-            return (command, Array.Empty<Parameter>());
-        }
-
-        var parameters = GetParameters(command, args[1..]).ToArray();
-
-        return (command, parameters);
+        Console.WriteLine(commandHelpBuilder);
     }
 
-    private static ICommand GetCommand(string commandName)
+    private static void ValidateRequiredParameters(CommandDescriptor commandDescriptor)
     {
-        if (!Commands.TryGetValue(commandName, out var command))
-        {
-            throw new UnsupportedCommandException(commandName);
-        }
+        var commandArguments = commandDescriptor.Parameters.Select(parameter => parameter.Argument).ToArray();
 
-        return command;
+        commandDescriptor.Command.ValidateRequiredArguments(commandArguments);
     }
 
-    private static IEnumerable<Parameter> GetParameters(ICommand command, string[] args)
+    private static void ExecuteCommand(CommandDescriptor commandDescriptor)
     {
-        for (var i = 0; i < args.Length; i++)
-        {
-            var argumentName = args[i];
-            var argument = command.Config.AllArguments.FirstOrDefault(argument => argument.Equals(argumentName));
-            if (argument is null)
-            {
-                throw new UnsupportedArgumentException(command.Config.Name, argumentName);
-            }
-
-            string? value = null;
-            if (argument.RequiresValue)
-            {
-                value = GetValue(ref i);
-
-                if (value is null)
-                {
-                    throw new MissingValueForArgumentException(argument);
-                }
-            }
-
-            yield return new Parameter(argument, value);
-        }
-
-        yield break;
-
-        string? GetValue(ref int current)
-        {
-            var next = current + 1;
-            if (next >= args.Length)
-            {
-                return null;
-            }
-
-            var value = args[next];
-            if (ArgumentHelper.IsArgument(value))
-            {
-                return null;
-            }
-
-            current = next;
-            return value;
-        }
+        commandDescriptor.Command.Execute(commandDescriptor.Parameters);
     }
 
-    private static void DisplayGlobalHelp()
-    {
-        var globalHelpBuilder = new StringBuilder("Fridge supports the following commands:")
-            .AppendLine();
-
-        foreach (var command in Commands.Values)
-        {
-            var commandHelpBuilder = command.GetHelpBuilder();
-            globalHelpBuilder.Append(commandHelpBuilder);
-        }
-        
-        Console.WriteLine(globalHelpBuilder);
-    }
-
-    private static bool IsHelpRequested(Parameter[] parameters)
+    private static bool IsHelpRequested(IEnumerable<Parameter> parameters)
     {
         return parameters.Any(parameter => parameter.Argument.Equals(CommonArguments.Help));
     }

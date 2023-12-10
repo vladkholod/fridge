@@ -8,7 +8,7 @@ public class Argument
 
     public string Description { get; init; } = null!;
 
-    public bool RequiresValue { get; init; } = false;
+    public bool RequiresValue { get; init; }
 
     public override bool Equals(object? obj)
     {

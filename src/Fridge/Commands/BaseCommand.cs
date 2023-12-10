@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Fridge.Common;
 using Fridge.Exceptions;
 using Fridge.Models;
 
@@ -45,7 +44,7 @@ public abstract class BaseCommand : ICommand
         }
     }
 
-    public void ValidateRequiredArguments(Argument[] arguments)
+    public void ValidateRequiredArguments(IEnumerable<Argument> arguments)
     {
         var missingRequiredArguments = Config.RequiredArguments.Except(arguments)
             .ToArray();

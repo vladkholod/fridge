@@ -1,6 +1,6 @@
 ﻿namespace Fridge.Commands.Freeze;
 
-public static class ParserHelper
+public static class JsonParsingHelper
 {
     private const char KeyIdentifier = '"';
     
