@@ -40,9 +40,32 @@ public static class NpmListHelper
 
         var libName = line[(nameIndex + 1)..versionSeparatorIndex];
 
-        var version = line[(versionSeparatorIndex + 1)..];
+        var version = GetVersion(line[(versionSeparatorIndex + 1)..]);
 
         lib = (libName.ToString(), version.ToString());
         return true;
+    }
+
+    private static ReadOnlySpan<char> GetVersion(ReadOnlySpan<char> line)
+    {
+        line = line.Trim("^~><");
+
+        var endIndex = 0;
+        foreach (var character in line)
+        {
+            if (!char.IsDigit(character) && !char.IsLetter(character) && !IsAllowedSpecial(character))
+            {
+                break;
+            }
+
+            endIndex++;
+        }
+
+        return line[..endIndex];
+
+        static bool IsAllowedSpecial(char character)
+        {
+            return character == '-' || character == '.';
+        }
     }
 }
