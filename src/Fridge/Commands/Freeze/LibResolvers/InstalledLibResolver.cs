@@ -49,10 +49,7 @@ public class InstalledLibResolver : ILibResolver
 
         RunNpmList(process);
 
-        if (!_suppressErrors)
-        {
-            VerifyErrors(process);
-        }
+        VerifyErrors(process, _suppressErrors);
 
         var libs = ParseOutput(process);
 
@@ -68,14 +65,14 @@ public class InstalledLibResolver : ILibResolver
         inputWriter.WriteLine("npm list");
     }
 
-    private static void VerifyErrors(Process process)
+    private static void VerifyErrors(Process process, bool suppressErrors)
     {
         using var errorReader = process.StandardError;
 
-        var errors = errorReader.ReadToEnd();
-        if (!string.IsNullOrEmpty(errors))
+        var containsError = errorReader.Read() != -1;
+        if (containsError && !suppressErrors)
         {
-            throw new Exception($"Command was executed with errors:\n{errors}");
+            throw new Exception("`npm list` executed with error.");
         }
     }
 
