@@ -19,6 +19,7 @@ public class FreezeCommand : BaseCommand
             FreezeCommandArguments.VersionListFile,
             FreezeCommandArguments.FreezingDependenciesObject,
             FreezeCommandArguments.Force,
+            FreezeCommandArguments.DryRun,
         },
     };
 
@@ -46,13 +47,34 @@ public class FreezeCommand : BaseCommand
             libToVersionMap,
             freezeObjects);
 
-        ReplacePackageJson(packageJsonFile.FullName, tempFilePath);
+        ApplyChanges(parameters, packageJsonFile.FullName, tempFilePath);
+    }
+
+    private static void ApplyChanges(Parameter[] parameters, string packageJsonFilePath, string tempFilePath)
+    {
+        var isDryRun = parameters.ContainsArgument(FreezeCommandArguments.DryRun);
+        if (isDryRun)
+        {
+            DisplayChanges(tempFilePath);
+        }
+        else
+        {
+            ReplacePackageJson(packageJsonFilePath, tempFilePath);
+        }
+
+        File.Delete(tempFilePath);
+    }
+
+    private static void DisplayChanges(string tempFilePath)
+    {
+        var fileData = File.ReadAllText(tempFilePath);
+
+        Console.WriteLine($"package.json after changes:{Environment.NewLine}{fileData}");
     }
 
     private static void ReplacePackageJson(string packageJsonFilePath, string tempFilePath)
     {
         File.Copy(tempFilePath, packageJsonFilePath, true);
-        File.Delete(tempFilePath);
     }
 
     private static FileInfo GetPackageJsonFile(Parameter[] parameters)
@@ -140,12 +162,11 @@ public class FreezeCommand : BaseCommand
             var packageJsonFileParameter =
                 parameters.First(parameter => parameter.Argument.Equals(FreezeCommandArguments.PackageJsonFile));
 
-            var suppressErrors =
-                parameters.FirstOrDefault(parameter => parameter.Argument.Equals(FreezeCommandArguments.Force)) is not null;
+            var isForce = parameters.ContainsArgument(FreezeCommandArguments.Force);
             
             libResolver = new InstalledLibResolver(
                 new DirectoryInfo(Path.GetDirectoryName(packageJsonFileParameter.Value) ?? string.Empty),
-                suppressErrors);
+                isForce);
         }
 
         return libResolver.Resolve();

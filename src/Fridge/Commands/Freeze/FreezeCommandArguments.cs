@@ -38,4 +38,12 @@ public static class FreezeCommandArguments
         Description = $"ignores errors if occurs when {VersionListFile.Full} is not specified.",
         RequiresValue = false,
     };
+
+    public static readonly Argument DryRun = new()
+    {
+        Full = "--dryRun",
+        Short = "-dr",
+        Description = "does not apply changes but print it out",
+        RequiresValue = false,
+    };
 }
